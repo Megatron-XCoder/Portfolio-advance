@@ -129,7 +129,7 @@ export default function Home() {
         </div>
 
         <Terminal
-          text="Innovative developer with strong expertise in Java, JavaScript, MERN Stack, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
+          text="Innovative developer expert in Java, JavaScript, MERN Stack, Linux, Cloud Computing Technologies. Passionate about DevOps with exceptional qualities."
           typingSpeed={200}
           className="max-w-3xl mx-auto"
           onComplete={() => setIntroComplete(true)}
