@@ -12,23 +12,23 @@ export function Footer() {
             </p>
           </div>
           <div className="flex space-x-4">
-            <Link href="https://github.com" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://github.com/Megatron-XCoder" className="text-muted-foreground hover:text-primary transition-colors">
               <Github size={20} />
               <span className="sr-only">GitHub</span>
             </Link>
-            <Link href="https://twitter.com" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://x.com/Official_San_Kd" className="text-muted-foreground hover:text-primary transition-colors">
               <Twitter size={20} />
               <span className="sr-only">Twitter</span>
             </Link>
-            <Link href="https://linkedin.com" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://www.linkedin.com/in/sanjeev-kd/" className="text-muted-foreground hover:text-primary transition-colors">
               <Linkedin size={20} />
               <span className="sr-only">LinkedIn</span>
             </Link>
-            <Link href="https://facebook.com" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://www.facebook.com/profile.php?id=100076465377831" className="text-muted-foreground hover:text-primary transition-colors">
               <Facebook size={20} />
               <span className="sr-only">Facebook</span>
             </Link>
-            <Link href="https://instagram.com" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://www.instagram.com/sanjeev_kd_/" className="text-muted-foreground hover:text-primary transition-colors">
               <Instagram size={20} />
               <span className="sr-only">Instagram</span>
             </Link>

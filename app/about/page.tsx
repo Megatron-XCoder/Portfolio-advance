@@ -174,7 +174,7 @@ export default function AboutPage() {
                       {isAuthenticated ? (
                           <div className="flex gap-2">
                             <Link href="/admin/resume">
-                              <Button className="bg-secondary hover:bg-secondary/80">Manage Resume</Button>
+                              <Button className="bg-secondary text-white hover:bg-secondary/80">Manage Resume</Button>
                             </Link>
                             <Button variant="outline" size="sm" onClick={logout}>
                               <LogOut size={16} className="mr-2" />
@@ -310,35 +310,35 @@ export default function AboutPage() {
                           <p className="mb-2 text-primary">social:</p>
                           <div className="flex space-x-4">
                             <Link
-                                href="https://github.com"
+                                href="https://github.com/Megatron-XCoder"
                                 className="hover:text-primary transition-colors"
                                 target="_blank"
                             >
                               <Github size={20} />
                             </Link>
                             <Link
-                                href="https://twitter.com"
+                                href="https://x.com/Official_San_Kd"
                                 className="hover:text-primary transition-colors"
                                 target="_blank"
                             >
                               <Twitter size={20} />
                             </Link>
                             <Link
-                                href="https://linkedin.com"
+                                href="https://www.linkedin.com/in/sanjeev-kd/"
                                 className="hover:text-primary transition-colors"
                                 target="_blank"
                             >
                               <Linkedin size={20} />
                             </Link>
                             <Link
-                                href="https://facebook.com"
+                                href="https://www.facebook.com/profile.php?id=100076465377831"
                                 className="hover:text-primary transition-colors"
                                 target="_blank"
                             >
                               <Facebook size={20} />
                             </Link>
                             <Link
-                                href="https://instagram.com"
+                                href="https://www.instagram.com/sanjeev_kd_/"
                                 className="hover:text-primary transition-colors"
                                 target="_blank"
                             >

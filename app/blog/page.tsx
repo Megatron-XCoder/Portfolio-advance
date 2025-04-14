@@ -52,11 +52,11 @@ export default function BlogPage() {
           <div className="terminal-title">blog_posts.sh</div>
         </div>
         <div className="terminal-content">
-          <div className="flex justify-between items-center mb-4">
-            <p>
+          <div className="flex flex-col justify-between items-start mb-4">
+            <p className={"pb-4"}>
               <span className="text-primary">$</span> ls -la /articles
             </p>
-            <div className="flex gap-2">
+            <div className=" grid grid-cols-2 sm:grid-cols-3 gap-2">
               <Button variant="outline" size="sm" onClick={fetchPosts} disabled={loading}>
                 <RefreshCw size={16} className={`mr-2 ${loading ? "animate-spin" : ""}`} />
                 Refresh
