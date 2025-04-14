@@ -88,7 +88,7 @@ export default function AboutPage() {
       <div className="space-y-16">
         <section>
           <Terminal
-              text="Initializing personal profile... Access granted. Loading bio data..."
+              text="I nitializing personal profile... Access granted. Loading bio data..."
               typingSpeed={30}
               className="max-w-3xl mx-auto"
               onComplete={() => setIntroComplete(true)}
@@ -96,7 +96,7 @@ export default function AboutPage() {
 
           {introComplete && (
               <Terminal
-                  text="Software Engineer with excellent problem-solving skills and ability to perform well in a team. Good knowledge of Java, JavaScript, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
+                  text="S oftware Engineer with excellent problem-solving skills and ability to perform well in a team. Good knowledge of Java, JavaScript, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
                   typingSpeed={20}
                   className="max-w-3xl mx-auto mt-4"
                   showPrompt={false}
