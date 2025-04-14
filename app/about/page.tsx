@@ -7,10 +7,17 @@ import Link from "next/link"
 import { EducationCard } from "@/components/education-card"
 import { SkillProgress } from "@/components/skill-progress"
 import { ContactForm } from "@/components/contact-form"
+import { ResumeDownloadButton } from "@/components/resume-download-button"
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
+import { LoginModal } from "@/components/login-modal"
+import { LogIn, LogOut } from "lucide-react"
 
 export default function AboutPage() {
   const [introComplete, setIntroComplete] = useState(false)
   const [bioComplete, setBioComplete] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const { isAuthenticated, logout } = useAuth()
 
   const experiences = [
     {
@@ -81,7 +88,7 @@ export default function AboutPage() {
       <div className="space-y-16">
         <section>
           <Terminal
-              text="I nitializing personal profile... Access granted. Loading bio data..."
+              text="Initializing personal profile... Access granted. Loading bio data..."
               typingSpeed={30}
               className="max-w-3xl mx-auto"
               onComplete={() => setIntroComplete(true)}
@@ -89,7 +96,7 @@ export default function AboutPage() {
 
           {introComplete && (
               <Terminal
-                  text="S oftware Engineer with excellent problem-solving skills and ability to perform well in a team. Good knowledge of Java, JavaScript, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
+                  text="Software Engineer with excellent problem-solving skills and ability to perform well in a team. Good knowledge of Java, JavaScript, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
                   typingSpeed={20}
                   className="max-w-3xl mx-auto mt-4"
                   showPrompt={false}
@@ -160,6 +167,26 @@ export default function AboutPage() {
                           Achieved Training Champ position at Eclerx Services Limited.
                         </p>
                       </div>
+                    </div>
+                    <div className="mt-6 flex justify-center gap-4 flex-wrap">
+                      <ResumeDownloadButton />
+
+                      {isAuthenticated ? (
+                          <div className="flex gap-2">
+                            <Link href="/admin/resume">
+                              <Button className="bg-secondary hover:bg-secondary/80">Manage Resume</Button>
+                            </Link>
+                            <Button variant="outline" size="sm" onClick={logout}>
+                              <LogOut size={16} className="mr-2" />
+                              Logout
+                            </Button>
+                          </div>
+                      ) : (
+                          <Button variant="outline" onClick={() => setIsLoginModalOpen(true)}>
+                            <LogIn size={16} className="mr-2" />
+                            Admin Login
+                          </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -324,6 +351,7 @@ export default function AboutPage() {
                   </div>
                 </div>
               </section>
+              <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
             </>
         )}
       </div>

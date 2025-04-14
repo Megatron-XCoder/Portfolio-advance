@@ -125,7 +125,7 @@ export default function Home() {
 
           <Terminal
               text="Innovative developer with strong expertise in Java, JavaScript, MERN Stack, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
-              typingSpeed={40}
+              typingSpeed={200}
               className="max-w-3xl mx-auto"
               onComplete={() => setIntroComplete(true)}
           />
