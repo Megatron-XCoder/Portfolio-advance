@@ -9,12 +9,15 @@ import { ProjectCard } from "@/components/project-card"
 import { BlogCard } from "@/components/blog-card"
 import { ArrowRight } from "lucide-react"
 import type { BlogPost } from "@/lib/models/blog"
+import type { Project } from "@/lib/models/project"
 
 export default function Home() {
   const [introComplete, setIntroComplete] = useState(false)
   const [typedText, setTypedText] = useState("")
   const [latestPosts, setLatestPosts] = useState<BlogPost[]>([])
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
   const [loadingPosts, setLoadingPosts] = useState(true)
+  const [loadingProjects, setLoadingProjects] = useState(true)
   const roles = ["Software Engineer", "Full Stack Developer", "MERN Stack Developer", "UI/UX Designer"]
   const [roleIndex, setRoleIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
@@ -129,7 +132,7 @@ export default function Home() {
         </div>
 
         <Terminal
-          text="Innovative developer expert in Java, JavaScript, MERN Stack, Linux, Cloud Computing Technologies. Passionate about DevOps with exceptional qualities."
+          text="Innovative developer with strong expertise in Java, JavaScript, MERN Stack, Kotlin, Linux, Agile Methodology, Cloud Computing Technologies, and SDLC models. Passionate about DevOps with exceptional qualities."
           typingSpeed={200}
           className="max-w-3xl mx-auto"
           onComplete={() => setIntroComplete(true)}

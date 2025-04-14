@@ -1,98 +1,139 @@
 "use client"
 
-import { useParams, notFound } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useParams, useRouter, notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, Github, ExternalLink } from "lucide-react"
+import { ArrowLeft, Github, ExternalLink, Edit, Trash2, AlertTriangle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import type { Project } from "@/lib/models/project"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const [project, setProject] = useState<Project | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const { isAuthenticated } = useAuth()
 
-  // This would typically come from an API or database
-  const projects = {
-    "web-design": {
-      title: "Web Design",
-      description:
-        "Creating visually appealing and user-friendly websites tailored to brand identities with modern design principles.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["HTML", "CSS", "JavaScript", "React"],
-      category: "web",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://web-design-demo.vercel.app",
-      longDescription:
-        "Our web design services focus on creating visually appealing and user-friendly websites that are tailored to your brand's identity. We use modern design principles to enhance user experience and engagement. Our approach combines aesthetics with functionality, ensuring that your website not only looks great but also performs well. We pay attention to details like typography, color schemes, and layout to create a cohesive and professional online presence. Our designs are responsive, ensuring they look great on all devices from desktops to smartphones.",
-    },
-    "ui-ux-design": {
-      title: "UI/UX Design",
-      description:
-        "Designing intuitive user interfaces and experiences that ensure websites and applications are both functional and enjoyable.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["Figma", "Adobe XD", "Photoshop", "Illustrator"],
-      category: "design",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://ui-ux-design-demo.vercel.app",
-      longDescription:
-        "Our UI/UX design services focus on creating intuitive interfaces and experiences that make your website or application both functional and enjoyable to use. We prioritize user-centered design to meet your audience's needs. Our process begins with research to understand your users, followed by wireframing and prototyping to test ideas before implementation. We create designs that guide users intuitively through your digital product, reducing friction and increasing satisfaction. Our goal is to create memorable experiences that keep users coming back.",
-    },
-    "web-development": {
-      title: "Web Development",
-      description:
-        "Building robust and scalable web applications using the latest technologies with high performance and security.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["MERN Stack", "JavaScript", "Node.js", "MongoDB"],
-      category: "web",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://web-dev-demo.vercel.app",
-      longDescription:
-        "Our web development services focus on building robust and scalable web applications using the latest technologies. We ensure high performance, security, and maintainability for your online presence. We specialize in the MERN stack (MongoDB, Express, React, Node.js) to create dynamic and responsive web applications. Our development process follows best practices for clean, maintainable code that can grow with your business. We implement security measures to protect your data and your users. Whether you need a simple website or a complex web application, we have the expertise to bring your vision to life.",
-    },
-    "seo-optimization": {
-      title: "SEO Optimization",
-      description:
-        "Improving website visibility on search engines through effective SEO strategies to increase organic traffic.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["SEO Tools", "Analytics", "Content Strategy"],
-      category: "marketing",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://seo-demo.vercel.app",
-      longDescription:
-        "Our SEO optimization services focus on improving your website's visibility on search engines through effective strategies. We help increase organic traffic and ensure your site ranks higher in search results. Our approach includes keyword research, on-page optimization, technical SEO improvements, and content strategy. We analyze your competitors to identify opportunities and track your performance with detailed analytics. Our goal is to drive more qualified traffic to your website, increasing leads and conversions. We stay updated with the latest search engine algorithms to ensure your site maintains its ranking.",
-    },
-    "mobile-app": {
-      title: "Mobile App Development",
-      description: "Creating responsive and user-friendly mobile applications for Android and iOS platforms.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["React Native", "Kotlin", "Swift"],
-      category: "app",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://mobile-app-demo.vercel.app",
-      longDescription:
-        "Our mobile app development services focus on creating responsive and user-friendly applications for Android and iOS platforms. We use technologies like React Native for cross-platform development, as well as native languages like Kotlin and Swift when needed. Our apps are designed with the user in mind, ensuring intuitive navigation and a seamless experience. We implement features like push notifications, offline functionality, and secure authentication to enhance user engagement. Our testing process ensures your app works flawlessly across different devices and operating systems.",
-    },
-    "graphic-design": {
-      title: "Graphic Design",
-      description: "Creating visual content to communicate messages through typography, color, and images.",
-      image: "/placeholder.svg?height=600&width=800",
-      technologies: ["Photoshop", "Illustrator", "InDesign"],
-      category: "design",
-      github: "https://github.com/sanjeevkd",
-      demo: "https://graphic-design-demo.vercel.app",
-      longDescription:
-        "Our graphic design services focus on creating visual content that effectively communicates your message through typography, color, and images. We create designs for various purposes including logos, marketing materials, social media graphics, and more. Our designers have a keen eye for detail and stay updated with the latest design trends. We work closely with you to understand your brand and target audience, ensuring our designs resonate with your intended viewers. From concept to final product, we ensure high-quality designs that make an impact.",
-    },
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/projects/${id}`)
+
+        if (!res.ok) {
+          if (res.status === 404) {
+            notFound()
+          }
+          throw new Error("Failed to fetch project")
+        }
+
+        const data = await res.json()
+        setProject(data)
+      } catch (err) {
+        console.error("Error fetching project:", err)
+        setError(`${err instanceof Error ? err.message : "Failed to load project"}`)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchProject()
+    }
+  }, [id])
+
+  const handleDelete = async () => {
+    if (!project?._id) return
+
+    try {
+      setIsDeleting(true)
+      const res = await fetch(`/api/projects/${project._id}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        throw new Error("Failed to delete project")
+      }
+
+      router.push("/projects")
+      router.refresh()
+    } catch (err) {
+      console.error("Error deleting project:", err)
+      alert("Failed to delete project. Please try again.")
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
-  const project = projects[id as keyof typeof projects]
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
+        <p className="mt-2 text-muted-foreground">Loading project...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Link href="/projects" className="inline-flex items-center gap-2 text-primary hover:underline">
+          <ArrowLeft size={16} /> Back to projects
+        </Link>
+
+        <div className="bg-destructive/20 border border-destructive text-white p-6 rounded-md text-center">
+          <AlertTriangle size={48} className="mx-auto mb-4 text-destructive" />
+          <h2 className="text-xl font-bold mb-2">Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!project) {
-    notFound()
+    return null
   }
 
   return (
     <div className="space-y-8">
-      <Link href="/projects" className="inline-flex items-center gap-2 text-primary hover:underline">
-        <ArrowLeft size={16} /> Back to projects
-      </Link>
+      <div className="flex justify-between items-center">
+        <Link href="/projects" className="inline-flex items-center gap-2 text-primary hover:underline">
+          <ArrowLeft size={16} /> Back to projects
+        </Link>
+
+        {isAuthenticated && (
+          <div className="flex gap-2">
+            <Link href={`/projects/edit/${project._id}`}>
+              <Button variant="outline" size="sm">
+                <Edit size={16} className="mr-2" />
+                Edit
+              </Button>
+            </Link>
+
+            {!showDeleteConfirm ? (
+              <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}>
+                <Trash2 size={16} className="mr-2" />
+                Delete
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting ? "Deleting..." : "Confirm Delete"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="terminal-window">
         <div className="terminal-header">
@@ -129,27 +170,31 @@ export default function ProjectPage() {
       </div>
 
       <div className="flex flex-wrap gap-4">
-        <a
-          href={project.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md transition-colors"
-        >
-          <Github size={16} /> View on GitHub
-        </a>
-        <a
-          href={project.demo}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-md transition-colors border border-primary/30"
-        >
-          <ExternalLink size={16} /> Live Demo
-        </a>
+        {project.github && (
+          <a
+            href={project.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md transition-colors"
+          >
+            <Github size={16} /> View on GitHub
+          </a>
+        )}
+        {project.demo && (
+          <a
+            href={project.demo}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-md transition-colors border border-primary/30"
+          >
+            <ExternalLink size={16} /> Live Demo
+          </a>
+        )}
       </div>
 
       <div className="prose prose-invert max-w-none">
         <h2 className="text-2xl font-bold mb-4">Project Overview</h2>
-        <p className="text-muted-foreground">{project.longDescription}</p>
+        <p className="text-muted-foreground">{project.longDescription || project.description}</p>
       </div>
     </div>
   )
