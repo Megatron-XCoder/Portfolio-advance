@@ -25,6 +25,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script 
+          src="https://seo-fixer.writesonic.com/site-audit/fixer-script/index.js" 
+          id="wsAiSeoMb" 
+          type="application/javascript"
+        ></script>
+        <script id="wsAiSeoInitScript" dangerouslySetInnerHTML={{
+          __html: `
+            wsSEOfixer.configure({
+              hostURL: 'https://seo-fixer.writesonic.com',
+              siteID: '68ef236b0951fe63f010713c'
+            });
+          `
+        }} />
+      </head>
       <body className={`${jetbrainsMono.variable} font-mono bg-black text-white min-h-screen flex flex-col`}>
         <div className="fixed inset-0 bg-grid-pattern opacity-10 pointer-events-none z-0"></div>
         <AuthProvider>
