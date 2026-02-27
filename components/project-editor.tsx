@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +12,8 @@ import type { Project } from "@/lib/models/project"
 import type { Category } from "@/lib/models/category"
 import { Loader2, Save, X, Plus } from "lucide-react"
 import { CategoryManager } from "@/components/category-manager"
+import { projectSchema, type ProjectFormData } from "@/lib/schemas"
+import { toast } from "sonner"
 
 interface ProjectEditorProps {
   project?: Project
@@ -19,41 +22,51 @@ interface ProjectEditorProps {
 
 export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
-  const [formData, setFormData] = useState<Partial<Project>>({
-    title: "",
-    description: "",
-    longDescription: "",
-    image: "/placeholder.svg?height=600&width=800",
-    technologies: [],
-    category: "",
-    featured: false,
-    github: "",
-    demo: "",
-  })
   const [techInput, setTechInput] = useState("")
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ProjectFormData>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      longDescription: "",
+      image: "/placeholder.svg?height=600&width=800",
+      technologies: [],
+      category: "",
+      featured: false,
+      github: "",
+      demo: "",
+    },
+  })
+
+  const technologies = watch("technologies") || []
 
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true)
       const res = await fetch("/api/categories")
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch categories")
-      }
+      if (!res.ok) throw new Error("Failed to fetch")
 
       const data = await res.json()
       setCategories(data)
 
-      // If we have categories and no category is selected, select the first one
-      if (data.length > 0 && !formData.category) {
-        setFormData((prev) => ({ ...prev, category: data[0].id }))
+      if (data.length > 0 && !watch("category")) {
+        setValue("category", data[0].id)
       }
     } catch (err) {
-      console.error("Error fetching categories:", err)
+      toast.error("Error fetching categories")
     } finally {
       setLoadingCategories(false)
     }
@@ -65,7 +78,7 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
 
   useEffect(() => {
     if (project) {
-      setFormData({
+      reset({
         title: project.title || "",
         description: project.description || "",
         longDescription: project.longDescription || "",
@@ -77,68 +90,47 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
         demo: project.demo || "",
       })
     }
-  }, [project])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target
-    setFormData((prev) => ({ ...prev, [name]: checked }))
-  }
+  }, [project, reset])
 
   const handleAddTech = () => {
-    if (techInput.trim() && !formData.technologies?.includes(techInput.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        technologies: [...(prev.technologies || []), techInput.trim()],
-      }))
+    if (techInput.trim() && !technologies.includes(techInput.trim())) {
+      setValue("technologies", [...technologies, techInput.trim()], { shouldValidate: true })
       setTechInput("")
     }
   }
 
   const handleRemoveTech = (tech: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      technologies: prev.technologies?.filter((t) => t !== tech),
-    }))
+    setValue(
+      "technologies",
+      technologies.filter((t) => t !== tech),
+      { shouldValidate: true }
+    )
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
+  const onSubmit = async (data: ProjectFormData) => {
     try {
       const url = isEdit ? `/api/projects/${project?._id}` : "/api/projects"
       const method = isEdit ? "PUT" : "POST"
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to save project")
-      }
+      if (!response.ok) throw new Error("Failed to save project")
 
-      const data = await response.json()
-      router.push(`/projects/${data.id}`)
+      const savedData = await response.json()
+      toast.success(isEdit ? "Project updated successfully!" : "Project created successfully!")
+      router.push(`/projects/${savedData.id || savedData._id}`)
       router.refresh()
     } catch (error) {
-      console.error("Error saving project:", error)
-      alert("Failed to save project. Please try again.")
-    } finally {
-      setLoading(false)
+      toast.error("Failed to save project. Please try again.")
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="terminal-window">
         <div className="terminal-header">
           <div className="terminal-button terminal-button-red"></div>
@@ -149,45 +141,36 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
         <div className="terminal-content p-4">
           <div className="space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">title:</span>
               </label>
               <Input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
+                {...register("title")}
                 placeholder="Enter project title"
                 className="bg-background border-border"
-                required
               />
+              {errors.title && <p className="text-destructive text-xs mt-1">{errors.title.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">description:</span>
               </label>
               <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
+                {...register("description")}
                 placeholder="Enter a short description"
                 className="bg-background border-border"
                 rows={2}
-                required
               />
+              {errors.description && <p className="text-destructive text-xs mt-1">{errors.description.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="longDescription" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">long_description:</span>
               </label>
               <Textarea
-                id="longDescription"
-                name="longDescription"
-                value={formData.longDescription}
-                onChange={handleChange}
+                {...register("longDescription")}
                 placeholder="Enter a detailed description"
                 className="bg-background border-border"
                 rows={5}
@@ -195,23 +178,20 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
             </div>
 
             <div>
-              <label htmlFor="image" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">image_url:</span>
               </label>
               <Input
-                id="image"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
+                {...register("image")}
                 placeholder="Enter image URL"
                 className="bg-background border-border"
-                required
               />
+              {errors.image && <p className="text-destructive text-xs mt-1">{errors.image.message}</p>}
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="category" className="block text-sm">
+                <label className="block text-sm">
                   <span className="text-primary">category:</span>
                 </label>
                 <Button
@@ -265,12 +245,8 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
                 </div>
               ) : (
                 <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
+                  {...register("category")}
                   className="w-full bg-background border-border rounded-md p-2"
-                  required
                 >
                   <option value="" disabled>
                     Select a category
@@ -282,15 +258,15 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
                   ))}
                 </select>
               )}
+              {errors.category && <p className="text-destructive text-xs mt-1">{errors.category.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="technologies" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">technologies:</span>
               </label>
               <div className="flex gap-2">
                 <Input
-                  id="technologies"
                   value={techInput}
                   onChange={(e) => setTechInput(e.target.value)}
                   placeholder="Add a technology"
@@ -306,9 +282,9 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
                   Add
                 </Button>
               </div>
-              {formData.technologies && formData.technologies.length > 0 && (
+              {technologies.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.technologies.map((tech) => (
+                  {technologies.map((tech) => (
                     <div
                       key={tech}
                       className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs"
@@ -325,43 +301,38 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
                   ))}
                 </div>
               )}
+              {errors.technologies && <p className="text-destructive text-xs mt-1">{errors.technologies.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="github" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">github_url:</span>
               </label>
               <Input
-                id="github"
-                name="github"
-                value={formData.github}
-                onChange={handleChange}
+                {...register("github")}
                 placeholder="Enter GitHub repository URL"
                 className="bg-background border-border"
               />
+              {errors.github && <p className="text-destructive text-xs mt-1">{errors.github.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="demo" className="block text-sm mb-1">
+              <label className="block text-sm mb-1">
                 <span className="text-primary">demo_url:</span>
               </label>
               <Input
-                id="demo"
-                name="demo"
-                value={formData.demo}
-                onChange={handleChange}
+                {...register("demo")}
                 placeholder="Enter live demo URL"
                 className="bg-background border-border"
               />
+              {errors.demo && <p className="text-destructive text-xs mt-1">{errors.demo.message}</p>}
             </div>
 
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="featured"
-                name="featured"
-                checked={formData.featured}
-                onChange={handleCheckboxChange}
+                {...register("featured")}
                 className="rounded border-border bg-background"
               />
               <label htmlFor="featured" className="text-sm">
@@ -370,11 +341,11 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
             </div>
 
             <div className="flex justify-end gap-4 pt-4">
-              <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
+              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <Loader2 size={16} className="mr-2 animate-spin" />
                     Saving...
@@ -393,3 +364,4 @@ export function ProjectEditor({ project, isEdit = false }: ProjectEditorProps) {
     </form>
   )
 }
+

@@ -1,15 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Terminal } from "@/components/terminal"
-import { ProjectCard } from "@/components/project-card"
+import { ProjectCarousel } from "@/components/project-carousel"
 import { BlogCard } from "@/components/blog-card"
 import { ArrowRight } from "lucide-react"
 import type { BlogPost } from "@/lib/models/blog"
 import type { Project } from "@/lib/models/project"
+import { SectionReveal } from "@/components/section-reveal"
 
 export default function Home() {
   const [introComplete, setIntroComplete] = useState(false)
@@ -22,7 +22,7 @@ export default function Home() {
   const [roleIndex, setRoleIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [typingSpeed, setTypingSpeed] = useState(150)
+  const [typingSpeed, setTypingSpeed] = useState(80)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,9 +34,9 @@ export default function Home() {
 
         if (charIndex >= currentRole.length) {
           setIsDeleting(true)
-          setTypingSpeed(100)
+          setTypingSpeed(50)
           setTimeout(() => {
-            setTypingSpeed(50)
+            setTypingSpeed(30)
           }, 1500)
         }
       } else {
@@ -46,7 +46,7 @@ export default function Home() {
         if (charIndex <= 1) {
           setIsDeleting(false)
           setRoleIndex((roleIndex + 1) % roles.length)
-          setTypingSpeed(150)
+          setTypingSpeed(80)
         }
       }
     }, typingSpeed)
@@ -83,7 +83,7 @@ export default function Home() {
         }
 
         const data = await res.json()
-        setFeaturedProjects(data.slice(0, 3))
+        setFeaturedProjects(data)
       } catch (err) {
         console.error("Error fetching featured projects:", err)
       } finally {
@@ -114,10 +114,10 @@ export default function Home() {
 
   return (
       <div className="space-y-16">
-        <section className="py-12 text-center">
-          <h1 className="text-4xl font-bold mb-4">Hi, I'm Sanjeev Kumar Das!</h1>
+        <section className="py-8 sm:py-12 text-center px-2">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Hi, I'm Sanjeev Kumar Das!</h1>
           <div className="h-8 mb-6">
-            <h2 className="text-xl">
+            <h2 className="text-lg sm:text-xl">
               I am a <span className="text-primary">{typedText}</span>
               <span className="terminal-cursor"></span>
             </h2>
@@ -125,7 +125,7 @@ export default function Home() {
 
           <Terminal
               text="Innovative developer expert in Java, JavaScript, MERN Stack, Linux, Cloud Computing. Passionate about DevOps with exceptional qualities."
-              typingSpeed={200}
+              typingSpeed={50}
               className="max-w-3xl mx-auto"
               onComplete={() => setIntroComplete(true)}
           />
@@ -142,101 +142,96 @@ export default function Home() {
           )}
         </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Featured Projects</h2>
-            <Link href="/projects" className="text-primary hover:underline inline-flex items-center gap-1">
-              View all <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          {loadingProjects ? (
-              <div className="text-center py-8">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
-                <p className="mt-2 text-muted-foreground">Loading featured projects...</p>
-              </div>
-          ) : featuredProjects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredProjects.map((project) => (
-                    <ProjectCard
-                        key={project._id}
-                        id={project.id}
-                        title={project.title}
-                        description={project.description}
-                        image={project.image}
-                        technologies={project.technologies}
-                    />
-                ))}
-              </div>
-          ) : (
-              <div className="text-center py-8 border border-border rounded-md">
-                <p className="text-muted-foreground mb-4">No featured projects found.</p>
-                <Link href="/projects">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">View All Projects</Button>
-                </Link>
-              </div>
-          )}
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Skills</h2>
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-button terminal-button-red"></div>
-              <div className="terminal-button terminal-button-yellow"></div>
-              <div className="terminal-button terminal-button-green"></div>
-              <div className="terminal-title">system_specs.sh</div>
+        <SectionReveal direction="up">
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Featured Projects</h2>
+              <Link href="/projects" className="text-primary hover:underline inline-flex items-center gap-1">
+                View all <ArrowRight size={16} />
+              </Link>
             </div>
-            <div className="terminal-content">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {skills.map((skill, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <span className="text-primary">$</span>
-                      <span className="text-white">{skill}</span>
-                    </div>
-                ))}
+
+            {loadingProjects ? (
+                <div className="text-center py-8">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
+                  <p className="mt-2 text-muted-foreground">Loading featured projects...</p>
+                </div>
+            ) : featuredProjects.length > 0 ? (
+              <ProjectCarousel projects={featuredProjects} />
+            ) : (
+                <div className="text-center py-8 border border-border rounded-md">
+                  <p className="text-muted-foreground mb-4">No featured projects found.</p>
+                  <Link href="/projects">
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">View All Projects</Button>
+                  </Link>
+                </div>
+            )}
+          </section>
+        </SectionReveal>
+
+        <SectionReveal direction="up" delay={100}>
+          <section>
+            <h2 className="text-2xl font-bold mb-6">Skills</h2>
+            <div className="terminal-window">
+              <div className="terminal-header">
+                <div className="terminal-button terminal-button-red"></div>
+                <div className="terminal-button terminal-button-yellow"></div>
+                <div className="terminal-button terminal-button-green"></div>
+                <div className="terminal-title">system_specs.sh</div>
+              </div>
+              <div className="terminal-content">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {skills.map((skill, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-primary">$</span>
+                        <span className="text-white">{skill}</span>
+                      </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </SectionReveal>
 
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Latest from the Blog</h2>
-            <Link href="/blog" className="text-primary hover:underline inline-flex items-center gap-1">
-              View all <ArrowRight size={16} />
-            </Link>
-          </div>
+        <SectionReveal direction="up" delay={100}>
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Latest from the Blog</h2>
+              <Link href="/blog" className="text-primary hover:underline inline-flex items-center gap-1">
+                View all <ArrowRight size={16} />
+              </Link>
+            </div>
 
-          {loadingPosts ? (
-              <div className="text-center py-8">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
-                <p className="mt-2 text-muted-foreground">Loading latest posts...</p>
-              </div>
-          ) : latestPosts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6">
-                {latestPosts.map((post) => (
-                    <BlogCard
-                        key={post._id}
-                        id={post.slug || post._id || ""}
-                        title={post.title}
-                        excerpt={post.excerpt}
-                        date={new Date(post.createdAt).toLocaleDateString()}
-                        readingTime={`${Math.ceil(post.content.length / 1000)} min read`}
-                    />
-                ))}
-              </div>
-          ) : (
-              <div className="text-center py-8 border border-border rounded-md">
-                <p className="text-muted-foreground mb-4">No blog posts found.</p>
-                <Link href="/blog/new">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Create Your First Blog Post
-                  </Button>
-                </Link>
-              </div>
-          )}
-        </section>
+            {loadingPosts ? (
+                <div className="text-center py-8">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
+                  <p className="mt-2 text-muted-foreground">Loading latest posts...</p>
+                </div>
+            ) : latestPosts.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {latestPosts.map((post) => (
+                      <BlogCard
+                          key={post._id}
+                          id={post.slug || post._id || ""}
+                          title={post.title}
+                          excerpt={post.excerpt}
+                          date={new Date(post.createdAt).toLocaleDateString()}
+                          readingTime={`${Math.ceil(post.content.length / 1000)} min read`}
+                      />
+                  ))}
+                </div>
+            ) : (
+                <div className="text-center py-8 border border-border rounded-md">
+                  <p className="text-muted-foreground mb-4">No blog posts found.</p>
+                  <Link href="/blog/new">
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      Create Your First Blog Post
+                    </Button>
+                  </Link>
+                </div>
+            )}
+          </section>
+        </SectionReveal>
       </div>
   )
 }

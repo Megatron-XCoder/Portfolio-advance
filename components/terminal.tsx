@@ -31,8 +31,8 @@ export function Terminal({
 
     const typeNextCharacter = () => {
       if (currentIndex < text.length) {
-        setDisplayedText(prev => prev + text[currentIndex])
         currentIndex++
+        setDisplayedText(text.substring(0, currentIndex))
         timer = setTimeout(typeNextCharacter, typingSpeed)
       } else {
         setIsTyping(false)
@@ -60,7 +60,12 @@ export function Terminal({
           <div className="terminal-title">terminal</div>
         </div>
         <div className="terminal-content">
-          {showPrompt && <span className="text-primary">$ </span>}
+          {showPrompt && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-primary select-none">$</span>
+              <span className="text-muted-foreground text-xs">execute</span>
+            </div>
+          )}
           <span>{displayedText}</span>
           {isTyping && <span className="terminal-cursor animate-pulse">|</span>}
         </div>

@@ -3,18 +3,19 @@ import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { generateProjectId } from "@/lib/models/project"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
     let project
 
     // Check if the ID is a valid ObjectId or a slug
-    if (ObjectId.isValid(params.id)) {
-      project = await db.collection("projects").findOne({ _id: new ObjectId(params.id) })
+    if (ObjectId.isValid(id)) {
+      project = await db.collection("projects").findOne({ _id: new ObjectId(id) })
     } else {
-      project = await db.collection("projects").findOne({ id: params.id })
+      project = await db.collection("projects").findOne({ id: id })
     }
 
     if (!project) {
@@ -28,8 +29,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
@@ -43,13 +45,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Update timestamp
     data.updatedAt = new Date()
 
-    const result = await db.collection("projects").updateOne({ _id: new ObjectId(params.id) }, { $set: data })
+    let query = {}
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) }
+    } else {
+      query = { id: id }
+    }
+
+    const result = await db.collection("projects").updateOne(query, { $set: data })
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    const updatedProject = await db.collection("projects").findOne({ _id: new ObjectId(params.id) })
+    const updatedProject = await db.collection("projects").findOne(query)
 
     return NextResponse.json(updatedProject)
   } catch (error) {
@@ -58,12 +67,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
-    const result = await db.collection("projects").deleteOne({ _id: new ObjectId(params.id) })
+    let query = {}
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) }
+    } else {
+      query = { id: id }
+    }
+
+    const result = await db.collection("projects").deleteOne(query)
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })

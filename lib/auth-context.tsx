@@ -19,27 +19,46 @@ export const useAuth = () => useContext(AuthContext)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // Check if user is already authenticated on mount
+  // Check if user is authenticated from secure HTTP-only cookie
   useEffect(() => {
-    const authStatus = localStorage.getItem("blog_auth")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/check")
+        const data = await res.json()
+        setIsAuthenticated(!!data.authenticated)
+      } catch (e) {
+        setIsAuthenticated(false)
+      }
     }
+    checkAuth()
   }, [])
 
   const login = async (username: string, password: string) => {
-    // Simple authentication - in a real app, this would be an API call
-    if (username === "root" && password === "0000") {
-      setIsAuthenticated(true)
-      localStorage.setItem("blog_auth", "true")
-      return true
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+      
+      if (res.ok) {
+        setIsAuthenticated(true)
+        return true
+      }
+      return false
+    } catch (e) {
+      return false
     }
-    return false
   }
 
-  const logout = () => {
-    setIsAuthenticated(false)
-    localStorage.removeItem("blog_auth")
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      setIsAuthenticated(false)
+    } catch (e) {
+      // Still set unauthenticated if fetch fails mostly
+      setIsAuthenticated(false)
+    }
   }
 
   return <AuthContext.Provider value={{ isAuthenticated, login, logout }}>{children}</AuthContext.Provider>

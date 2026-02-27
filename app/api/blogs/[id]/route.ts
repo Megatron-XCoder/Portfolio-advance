@@ -3,18 +3,19 @@ import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { generateSlug } from "@/lib/models/blog"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
     let blog
 
     // Check if the ID is a valid ObjectId or a slug
-    if (ObjectId.isValid(params.id)) {
-      blog = await db.collection("blogs").findOne({ _id: new ObjectId(params.id) })
+    if (ObjectId.isValid(id)) {
+      blog = await db.collection("blogs").findOne({ _id: new ObjectId(id) })
     } else {
-      blog = await db.collection("blogs").findOne({ slug: params.id })
+      blog = await db.collection("blogs").findOne({ slug: id })
     }
 
     if (!blog) {
@@ -28,8 +29,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
@@ -43,13 +45,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Update timestamp
     data.updatedAt = new Date()
 
-    const result = await db.collection("blogs").updateOne({ _id: new ObjectId(params.id) }, { $set: data })
+    let query = {}
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) }
+    } else {
+      query = { slug: id }
+    }
+
+    const result = await db.collection("blogs").updateOne(query, { $set: data })
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 })
     }
 
-    const updatedBlog = await db.collection("blogs").findOne({ _id: new ObjectId(params.id) })
+    const updatedBlog = await db.collection("blogs").findOne(query)
 
     return NextResponse.json(updatedBlog)
   } catch (error) {
@@ -58,12 +67,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db()
 
-    const result = await db.collection("blogs").deleteOne({ _id: new ObjectId(params.id) })
+    let query = {}
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) }
+    } else {
+      query = { slug: id }
+    }
+
+    const result = await db.collection("blogs").deleteOne(query)
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 })

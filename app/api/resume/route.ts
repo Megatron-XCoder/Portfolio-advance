@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import { Binary } from "mongodb" // ✅ this line fixes the error
 
@@ -7,28 +8,16 @@ export async function GET() {
     const client = await clientPromise
     const db = client.db()
 
-    const resume = await db.collection("resume").findOne({}, { sort: { uploadedAt: -1 } })
+    // Find all resumes, sorting newest first, and omit the large binary 'data' field
+    const resumes = await db.collection("resume").find(
+        {},
+        { projection: { data: 0 }, sort: { uploadedAt: -1 } }
+    ).toArray()
 
-    if (!resume) {
-      return NextResponse.json({ error: "No resume found" }, { status: 404 })
-    }
-
-    // Convert Binary data to Buffer
-    const buffer = Buffer.from(resume.data.buffer)
-
-    // Set appropriate headers for file download
-    const headers = new Headers()
-    headers.set("Content-Type", resume.contentType)
-    headers.set("Content-Disposition", `attachment; filename="${resume.filename}"`)
-    headers.set("Content-Length", buffer.length.toString())
-
-    return new NextResponse(buffer, {
-      status: 200,
-      headers,
-    })
+    return NextResponse.json(resumes)
   } catch (error) {
-    console.error("Error fetching resume:", error)
-    return NextResponse.json({ error: "Failed to fetch resume" }, { status: 500 })
+    console.error("Error fetching resumes:", error)
+    return NextResponse.json({ error: "Failed to fetch resumes" }, { status: 500 })
   }
 }
 
@@ -39,9 +28,13 @@ export async function POST(request: NextRequest) {
     
     const formData = await request.formData()
     const file = formData.get("file") as File
+    const title = formData.get("title") as string // The custom title input
     
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
+    }
+    if (!title || title.trim() === "") {
+      return NextResponse.json({ error: "Please provide a title for the resume" }, { status: 400 })
     }
     
     // Check file type
@@ -56,38 +49,19 @@ export async function POST(request: NextRequest) {
     
     const buffer = Buffer.from(await file.arrayBuffer())
     
-    // Delete any existing resume
-    await db.collection("resume").deleteMany({})
-    
-    // Save new resume
-    await db.collection("resume").insertOne({
+    // Save new resume (we no longer delete the old ones)
+    const result = await db.collection("resume").insertOne({
+      title: title.trim(),
       filename: file.name,
       contentType: file.type,
       data: new Binary(buffer),
       uploadedAt: new Date()
     })
     
-    return NextResponse.json({ success: true, filename: file.name })
+    return NextResponse.json({ success: true, id: result.insertedId, title: title.trim(), filename: file.name })
   } catch (error) {
     console.error("Error uploading resume:", error)
     return NextResponse.json({ error: "Failed to upload resume" }, { status: 500 })
   }
 }
 
-export async function DELETE() {
-  try {
-    const client = await clientPromise
-    const db = client.db()
-    
-    const result = await db.collection("resume").deleteMany({})
-    
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "No resume found" }, { status: 404 })
-    }
-    
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error("Error deleting resume:", error)
-    return NextResponse.json({ error: "Failed to delete resume" }, { status: 500 })
-  }
-}
